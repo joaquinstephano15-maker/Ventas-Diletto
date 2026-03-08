@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sistema de Registros de Ventas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --yape: #742284;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f0f2f5;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); 
+            margin: 0; 
+            padding: 10px; 
+            color: #333;
+        }
+
+        .container { max-width: 100%; margin: auto; }
+        
+        header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            border-radius: 12px; 
+            margin-bottom: 15px;
+        }
+
+        h1 { margin: 0; font-size: 1.4rem; }
+        h2 { font-size: 1.1rem; border-left: 4px solid var(--accent); padding-left: 10px; color: var(--primary); margin-bottom: 15px; }
+
+        .card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); 
+            margin-bottom: 15px; 
+        }
+
+        .form-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
+        select, input, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            background: #fafafa;
+            box-sizing: border-box;
+        }
+
+        textarea { font-family: inherit; resize: none; }
+
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 1rem;
+        }
+
+        .btn-register { background: var(--accent); color: white; margin-top: 10px; }
+        .btn-pdf { background: #e67e22; color: white; margin-top: 10px; }
+        .btn-close { background: var(--danger); color: white; margin-top: 20px; }
+        .btn-delete { background: var(--danger); color: white; padding: 8px; width: auto; border-radius: 5px; }
+        .btn-add { background: var(--success); color: white; padding: 10px; margin-top: 5px; }
+
+        .resumen-caja { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 10px; 
+            margin-bottom: 15px; 
+        }
+        @media (min-width: 600px) { .resumen-caja { grid-template-columns: repeat(3, 1fr); } }
+
+        .stat-box { padding: 12px; border-radius: 10px; text-align: center; color: white; }
+        .total-dia { background: var(--primary); }
+        .total-efectivo { background: #5d6d7e; }
+        .total-yape { background: var(--yape); }
+        .stat-box span { display: block; font-size: 1.2rem; font-weight: bold; }
+
+        .qr-section { text-align: center; background: var(--yape); color: white; padding: 20px; border-radius: 15px; }
+        .qr-image { 
+            width: 100%; 
+            max-width: 200px; 
+            height: auto; 
+            border: 6px solid white; 
+            border-radius: 10px; 
+            margin: 10px 0; 
+        }
+
+        .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; font-size: 0.85rem; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px 8px; text-align: left; }
+        th { background: #f8f9fa; color: #666; }
+
+        .edit-input {
+            padding: 5px;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+
+        .admin-table { min-width: 100% !important; }
+
+        @media (min-width: 1024px) {
+            .main-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header><h1>Sistema de Registros de Ventas</h1></header>
+
+    <div class="main-grid">
+        <div class="left-col">
+            <div class="card">
+                <h2>📝 Nueva Venta</h2>
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" id="ventaNombre" placeholder="Ej: Juan Pérez">
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="selCategoria" onchange="actualizarProductos()">
+                        <option value="">Seleccione...</option>
+                        <option value="PIZZAS">PIZZAS</option>
+                        <option value="POLLO AL HORNO">POLLO AL HORNO</option>
+                        <option value="ENTRADAS Y OTROS">ENTRADAS Y OTROS</option>
+                        <option value="POSTRES Y BEBIDAS">POSTRES Y BEBIDAS</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Producto</label>
+                    <select id="selProducto" onchange="mostrarPrecio()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Cantidad</label>
+                    <input type="number" id="ventaCant" value="1" min="1" oninput="calcularSubtotal()">
+                </div>
+                <div class="form-group">
+                    <label>Precio Total Lote (S/)</label>
+                    <input type="number" id="ventaPrecio" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Descripción / Nota (Opcional)</label>
+                    <textarea id="ventaNota" rows="2" placeholder="Ej: Sin picante..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Modalidad</label>
+                    <select id="modalidad">
+                        <option value="Local">Local</option>
+                        <option value="Llevar">Llevar</option>
+                        <option value="Delivery">Delivery</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Método de Pago</label>
+                    <select id="pago">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Yape">Yape</option>
+                    </select>
+                </div>
+                <button class="btn-register" onclick="registrarVenta()">💾 REGISTRAR</button>
+            </div>
+
+            <div class="card qr-section">
+                <h3>PAGAR CON YAPE</h3>
+                <img src="NUEVO-QR-YAPE.png" alt="QR Yape" class="qr-image">
+                <p><strong>Delia Julissa Villar Chacon</strong></p>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="card">
+                <h2>⚙️ Gestión de Menú y Precios</h2>
+                <div class="form-group">
+                    <label>Categoría para gestionar:</label>
+                    <select id="admCat" onchange="renderizarAdminMenu()">
+                        <option value="PIZZAS">PIZZAS</option>
+                        <option value="POLLO AL HORNO">POLLO AL HORNO</option>
+                        <option value="ENTRADAS Y OTROS">ENTRADAS Y OTROS</option>
+                        <option value="POSTRES Y BEBIDAS">POSTRES Y BEBIDAS</option>
+                    </select>
+                </div>
+                <div class="table-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Producto</th><th style="width: 80px;">S/</th><th></th></tr>
+                        </thead>
+                        <tbody id="tbodyAdmin"></tbody>
+                    </table>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="nuevoPNombre" placeholder="Nuevo Producto">
+                    <input type="number" id="nuevoPPrecio" placeholder="S/" style="width: 80px;">
+                    <button class="btn-add" style="width: auto;" onclick="agregarProductoAdmin()">+</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>💰 Resumen de Caja</h2>
+                <div class="resumen-caja">
+                    <div class="stat-box total-dia">TOTAL<span id="cajaTotal">S/ 0.00</span></div>
+                    <div class="stat-box total-efectivo">EFECTIVO<span id="cajaEfectivo">S/ 0.00</span></div>
+                    <div class="stat-box total-yape">YAPE<span id="cajaYape">S/ 0.00</span></div>
+                </div>
+                <button class="btn-pdf" onclick="exportarPDF()">📄 DESCARGAR PDF</button>
+            </div>
+
+            <div class="card">
+                <h2>📊 Historial de Ventas</h2>
+                <div class="table-container">
+                    <table id="tablaVentas">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Cliente</th>
+                                <th>Producto</th>
+                                <th>Cant.</th>
+                                <th>Nota</th>
+                                <th>Mod.</th>
+                                <th>Pago</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <button class="btn-close" onclick="cerrarCaja()">🔒 CERRAR DÍA Y LIMPIAR CAJA</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const inicialEstatica = {
+        "PIZZAS": [
+            { nombre: "AMERICANA PERSONAL", precio: 10.00 },
+            { nombre: "AMERICANA MEDIANA", precio: 20.00 },
+            { nombre: "AMERICANA FAMILIAR", precio: 32.00 },
+            { nombre: "HAWAIANA PERSONAL", precio: 13.00 },
+            { nombre: "HAWAIANA MEDIANA", precio: 24.00 },
+            { nombre: "HAWAIANA FAMILIAR", precio: 37.00 },
+            { nombre: "PEPPERONI PERSONAL", precio: 10.00 },
+            { nombre: "PEPPERONI MEDIANA", precio: 20.00 },
+            { nombre: "PEPPERONI FAMILIAR", precio: 32.00 },
+            { nombre: "CHORIZO PERSONAL", precio: 12.00 },
+            { nombre: "CHORIZO MEDIANA", precio: 22.00 },
+            { nombre: "CHORIZO FAMILIAR", precio: 35.00 },
+            { nombre: "ESPECIAL MEDIANA", precio: 25.00 },
+            { nombre: "ESPECIAL FAMILIAR", precio: 40.00 },
+            { nombre: "PECHUGON MEDIANA", precio: 25.00 },
+            { nombre: "PECHUGON FAMILIAR", precio: 40.00 },
+            { nombre: "VEGETARIANA MEDIANA", precio: 24.00 },
+            { nombre: "VEGETARIANA FAMILIAR", precio: 37.00 },
+            { nombre: "CHAMPIÑONES MEDIANA", precio: 24.00 },
+            { nombre: "CHAMPIÑONES FAMILIAR", precio: 37.00 },
+            { nombre: "DOS SABORES MEDIANA", precio: 30.00 },
+            { nombre: "DOS SABORES FAMILIAR", precio: 42.00 },
+            { nombre: "TAJADA AMERICANA", precio: 5.00 },
+            { nombre: "TAJADA PEPPERONI", precio: 5.00 },
+            { nombre: "TAJADA CHORIZO", precio: 5.00 }
+        ],
+        "POLLO AL HORNO": [
+            { nombre: "POLLO ARTESANAL ENTERO", precio: 68.00 },
+            { nombre: "1/2 POLLO ARTESANAL", precio: 35.00 },
+            { nombre: "1/4 POLLO ARTESANAL", precio: 24.00 }
+        ],
+        "ENTRADAS Y OTROS": [
+            { nombre: "PAN AL AJO 6 PORC.", precio: 6.00 },
+            { nombre: "PAPA RELLENA PORCIÓN", precio: 3.50 },
+            { nombre: "PORCIÓN LASAÑA", precio: 25.00 },
+            { nombre: "PORCIÓN MOLLEJITAS (12)", precio: 15.00 }
+        ],
+        "POSTRES Y BEBIDAS": [
+            { nombre: "PASTEL PLÁTANO CHISPAS", precio: 40.00 },
+            { nombre: "PASTEL ARÁNDANO", precio: 35.00 },
+            { nombre: "PASTEL VAINILLA", precio: 35.00 },
+            { nombre: "PASTEL PIÑA", precio: 35.00 },
+            { nombre: "PASTEL NARANJA", precio: 40.00 },
+            { nombre: "TAJADA PASTEL PLÁTANO", precio: 3.00 },
+            { nombre: "TAJADA PASTEL ARÁNDANO", precio: 3.00 },
+            { nombre: "TAJADA PASTEL VAINILLA", precio: 3.00 },
+            { nombre: "TAJADA PASTEL PIÑA", precio: 4.00 },
+            { nombre: "TAJADA PASTEL NARANJA", precio: 3.00 },
+            { nombre: "PICARONES PORCIÓN 4", precio: 4.00 },
+            { nombre: "PAN MOLDE JAMÓN/QUESO", precio: 6.00 },
+            { nombre: "PAN CON POLLO", precio: 6.50 },
+            { nombre: "VASO JUGO COMBINADO", precio: 5.00 },
+            { nombre: "VASO CHICHA MORADA", precio: 4.00 },
+            { nombre: "JARRA LT CHICHA", precio: 12.00 },
+            { nombre: "CAFÉ", precio: 3.00 },
+            { nombre: "INCA KOLA 1 LT", precio: 6.00 },
+            { nombre: "INCA KOLA 1.5 LT", precio: 8.00 },
+            { nombre: "COCA COLA 1 LT", precio: 6.00 },
+            { nombre: "COCA COLA 1.5 LT", precio: 8.00 }
+        ]
+    };
+
+    let inicial = JSON.parse(localStorage.getItem('menu_diletto_v1')) || inicialEstatica;
+    let ventas = JSON.parse(localStorage.getItem('ventas_diletto_v14')) || [];
+
+    function actualizarProductos() {
+        const cat = document.getElementById('selCategoria').value;
+        const selProd = document.getElementById('selProducto');
+        selProd.innerHTML = '<option value="">Seleccione...</option>';
+        if (cat && inicial[cat]) inicial[cat].forEach((p, i) => {
+            let opt = document.createElement('option');
+            opt.value = i; opt.textContent = p.nombre;
+            selProd.appendChild(opt);
+        });
+        mostrarPrecio();
+    }
+
+    function mostrarPrecio() {
+        calcularSubtotal();
+    }
+
+    function calcularSubtotal() {
+        const cat = document.getElementById('selCategoria').value;
+        const idx = document.getElementById('selProducto').value;
+        const cant = parseInt(document.getElementById('ventaCant').value) || 1;
+        if (cat && idx !== "" && inicial[cat][idx]) {
+            const unitario = inicial[cat][idx].precio;
+            document.getElementById('ventaPrecio').value = (unitario * cant).toFixed(2);
+        } else {
+            document.getElementById('ventaPrecio').value = "";
+        }
+    }
+
+    function registrarVenta() {
+        const cat = document.getElementById('selCategoria').value;
+        const idx = document.getElementById('selProducto').value;
+        const cant = parseInt(document.getElementById('ventaCant').value) || 1;
+        
+        if (!cat || idx === "") return alert("Selecciona un producto");
+
+        const ahora = new Date();
+        const subtotal = parseFloat(document.getElementById('ventaPrecio').value);
+
+        ventas.push({
+            id: Date.now(),
+            fecha: ahora.toLocaleDateString(),
+            hora: ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0'),
+            cliente: document.getElementById('ventaNombre').value || "Cliente Varios",
+            producto: inicial[cat][idx].nombre,
+            cantidad: cant,
+            nota: document.getElementById('ventaNota').value || "-",
+            modalidad: document.getElementById('modalidad').value,
+            pago: document.getElementById('pago').value,
+            total: subtotal
+        });
+
+        localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
+        
+        document.getElementById('ventaNota').value = "";
+        document.getElementById('ventaCant').value = "1";
+        renderizarVentas();
+    }
+
+    function editarCampo(id, campo, valor) {
+        const index = ventas.findIndex(v => v.id === id);
+        if (index !== -1) {
+            ventas[index][campo] = valor || (campo === 'cliente' ? 'Cliente Varios' : '-');
+            localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
+            if(campo === 'pago') actualizarResumenSolo();
+        }
+    }
+
+    function borrarVenta(id) {
+        if(confirm("¿Eliminar registro?")) {
+            ventas = ventas.filter(v => v.id !== id);
+            localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
+            renderizarVentas();
+        }
+    }
+
+    function calcularTotales() {
+        let t = 0, e = 0, y = 0;
+        let resumenClientes = {};
+        
+        ventas.forEach(v => {
+            t += v.total;
+            if(v.pago === 'Efectivo') e += v.total; else y += v.total;
+            
+            if (!resumenClientes[v.cliente]) {
+                resumenClientes[v.cliente] = { total: 0, items: [] };
+            }
+            resumenClientes[v.cliente].total += v.total;
+            resumenClientes[v.cliente].items.push({ 
+                nombre: v.producto, 
+                cant: v.cantidad, 
+                precio: v.total,
+                pago: v.pago 
+            });
+        });
+        return { total: t, efectivo: e, yape: y, porCliente: resumenClientes };
+    }
+
+    function actualizarResumenSolo() {
+        const resumen = calcularTotales();
+        document.getElementById('cajaTotal').textContent = `S/ ${resumen.total.toFixed(2)}`;
+        document.getElementById('cajaEfectivo').textContent = `S/ ${resumen.efectivo.toFixed(2)}`;
+        document.getElementById('cajaYape').textContent = `S/ ${resumen.yape.toFixed(2)}`;
+    }
+
+    function renderizarVentas() {
+        const tbody = document.querySelector('#tablaVentas tbody');
+        tbody.innerHTML = "";
+        actualizarResumenSolo();
+
+        ventas.slice().reverse().forEach(v => {
+            tbody.innerHTML += `<tr>
+                <td>${v.fecha}</td>
+                <td><strong>${v.hora}</strong></td>
+                <td>
+                    <input type="text" class="edit-input" value="${v.cliente}" onchange="editarCampo(${v.id}, 'cliente', this.value)">
+                </td>
+                <td>${v.producto}</td>
+                <td>${v.cantidad}</td>
+                <td>
+                    <input type="text" class="edit-input" value="${v.nota}" onchange="editarCampo(${v.id}, 'nota', this.value)">
+                </td>
+                <td>${v.modalidad}</td>
+                <td>
+                    <select class="edit-input" onchange="editarCampo(${v.id}, 'pago', this.value)">
+                        <option value="Efectivo" ${v.pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
+                        <option value="Yape" ${v.pago === 'Yape' ? 'selected' : ''}>Yape</option>
+                    </select>
+                </td>
+                <td>S/ ${v.total.toFixed(2)}</td>
+                <td><button class="btn-delete" onclick="borrarVenta(${v.id})">❌</button></td>
+            </tr>`;
+        });
+    }
+
+    function renderizarAdminMenu() {
+        const cat = document.getElementById('admCat').value;
+        const tbody = document.getElementById('tbodyAdmin');
+        tbody.innerHTML = "";
+        
+        inicial[cat].forEach((p, i) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td><input type="text" class="edit-input" value="${p.nombre}" onchange="editarMenuAdmin('${cat}', ${i}, 'nombre', this.value)"></td>
+                    <td><input type="number" class="edit-input" value="${p.precio}" onchange="editarMenuAdmin('${cat}', ${i}, 'precio', this.value)"></td>
+                    <td><button onclick="borrarProductoAdmin('${cat}', ${i})">❌</button></td>
+                </tr>
+            `;
+        });
+    }
+
+    function editarMenuAdmin(cat, i, campo, valor) {
+        inicial[cat][i][campo] = campo === 'precio' ? parseFloat(valor) : valor.toUpperCase();
+        guardarMenuAdmin();
+        actualizarProductos();
+    }
+
+    function agregarProductoAdmin() {
+        const cat = document.getElementById('admCat').value;
+        const nom = document.getElementById('nuevoPNombre').value;
+        const pre = parseFloat(document.getElementById('nuevoPPrecio').value);
+        if(!nom || isNaN(pre)) return alert("Completa nombre y precio");
+        inicial[cat].push({ nombre: nom.toUpperCase(), precio: pre });
+        guardarMenuAdmin();
+        document.getElementById('nuevoPNombre').value = "";
+        document.getElementById('nuevoPPrecio').value = "";
+        renderizarAdminMenu();
+        actualizarProductos();
+    }
+
+    function borrarProductoAdmin(cat, i) {
+        if(confirm("¿Eliminar del menú?")) {
+            inicial[cat].splice(i, 1);
+            guardarMenuAdmin();
+            renderizarAdminMenu();
+            actualizarProductos();
+        }
+    }
+
+    function guardarMenuAdmin() {
+        localStorage.setItem('menu_diletto_v1', JSON.stringify(inicial));
+    }
+
+    function exportarPDF() {
+        if (ventas.length === 0) return alert("No hay ventas.");
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        const resumen = calcularTotales();
+        
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+        doc.text("REPORTE DE VENTAS - DILETTO ARTESANAL", 14, 15);
+        
+        doc.autoTable({
+            startY: 25,
+            head: [['Fecha', 'Hora', 'Cliente', 'Producto', 'Cant', 'Nota', 'Mod', 'Pago', 'Total']],
+            body: ventas.map(v => [v.fecha, v.hora, v.cliente, v.producto, v.cantidad, v.nota, v.modalidad, v.pago, `S/ ${v.total.toFixed(2)}`]),
+            theme: 'striped',
+            headStyles: { fillColor: [44, 62, 80] },
+            styles: { fontSize: 8 },
+            columnStyles: { 2: { cellWidth: 30 }, 3: { cellWidth: 40 }, 5: { cellWidth: 35 } }
+        });
+
+        let currentY = doc.lastAutoTable.finalY + 15;
+
+        doc.setFontSize(12);
+        doc.text("DETALLE Y RESUMEN POR CLIENTE", 14, currentY - 5);
+        
+        const dataDesglose = [];
+        Object.keys(resumen.porCliente).forEach(nombre => {
+            dataDesglose.push([
+                { content: nombre, styles: { fontStyle: 'bold', fillColor: [230, 240, 255] } }, 
+                { content: "", styles: { fillColor: [230, 240, 255] } }, 
+                { content: `Total: S/ ${resumen.porCliente[nombre].total.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 240, 255] } }
+            ]);
+            
+            resumen.porCliente[nombre].items.forEach(item => {
+                dataDesglose.push([
+                    `  (${item.cant}) ${item.nombre}`, 
+                    { content: item.pago, styles: { halign: 'center' } }, 
+                    `S/ ${item.precio.toFixed(2)}`
+                ]);
+            });
+        });
+
+        doc.autoTable({
+            startY: currentY,
+            head: [['Cliente / Productos', 'Pago', 'Costo']],
+            body: dataDesglose,
+            theme: 'grid',
+            headStyles: { fillColor: [39, 174, 96] },
+            styles: { fontSize: 9 },
+            margin: { left: 14 },
+            tableWidth: 125 
+        });
+
+        doc.autoTable({
+            startY: currentY,
+            head: [[{ content: 'CIERRE DE CAJA GENERAL', colSpan: 2, styles: { halign: 'center', fillColor: [52, 152, 219] } }]],
+            body: [
+                ['Total Efectivo', `S/ ${resumen.efectivo.toFixed(2)}`],
+                ['Total Yape', `S/ ${resumen.yape.toFixed(2)}`],
+                [{ content: 'TOTAL DEL DÍA', styles: { fontStyle: 'bold' } }, { content: `S/ ${resumen.total.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
+            ],
+            theme: 'grid',
+            styles: { fontSize: 10 },
+            margin: { left: 150 }, 
+            tableWidth: 80
+        });
+
+        doc.save(`Cierre_Caja_${new Date().toLocaleDateString()}.pdf`);
+    }
+
+    function cerrarCaja() {
+        if (ventas.length === 0) return alert("Caja vacía.");
+        if (confirm("¿Cerrar caja hoy? Se descargará el reporte y se borrarán los datos.")) {
+            exportarPDF();
+            ventas = [];
+            localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
+            renderizarVentas();
+        }
+    }
+
+    window.onload = () => {
+        renderizarVentas();
+        renderizarAdminMenu();
+    };
+</script>
+</body>
+</html>
