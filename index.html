@@ -14,7 +14,9 @@
             --yape: #742284;
             --success: #27ae60;
             --danger: #e74c3c;
+            --warning: #f1c40f;
             --bg: #f0f2f5;
+            --orange: #e67e22;
         }
 
         body { 
@@ -72,8 +74,8 @@
         }
 
         .btn-register { background: var(--accent); color: white; margin-top: 10px; }
-        .btn-pdf { background: #e67e22; color: white; margin-top: 10px; }
-        .btn-close { background: var(--danger); color: white; margin-top: 20px; }
+        .btn-validar { background: var(--primary); color: white; width: 100%; }
+        .btn-close { background: var(--danger); color: white; margin-top: 20px; font-size: 1.1rem; }
         .btn-delete { background: var(--danger); color: white; padding: 8px; width: auto; border-radius: 5px; }
         .btn-add { background: var(--success); color: white; padding: 10px; margin-top: 5px; }
 
@@ -85,11 +87,22 @@
         }
         @media (min-width: 600px) { .resumen-caja { grid-template-columns: repeat(3, 1fr); } }
 
-        .stat-box { padding: 12px; border-radius: 10px; text-align: center; color: white; }
+        .stat-box { padding: 12px; border-radius: 10px; text-align: center; color: white; transition: 0.3s; }
         .total-dia { background: var(--primary); }
         .total-efectivo { background: #5d6d7e; }
         .total-yape { background: var(--yape); }
         .stat-box span { display: block; font-size: 1.2rem; font-weight: bold; }
+
+        .seccion-arqueo {
+            display: none;
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         .qr-section { text-align: center; background: var(--yape); color: white; padding: 20px; border-radius: 15px; }
         .qr-image { 
@@ -116,6 +129,70 @@
 
         .admin-table { min-width: 100% !important; }
 
+        .cuentas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        .cliente-card {
+            background: #fff;
+            border: 1px solid var(--accent);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: left;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .cliente-card.pagado-card {
+            border-color: var(--success);
+            background-color: #f0fff4;
+        }
+        .cliente-card .nom { 
+            font-weight: bold; 
+            font-size: 0.85rem; 
+            color: var(--primary); 
+            display: block; 
+            border-bottom: 1px solid #eee;
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+        }
+        .detalle-items {
+            font-size: 0.75rem;
+            color: #555;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .item-linea { display: flex; align-items: center; gap: 8px; border-bottom: 1px dashed #f0f0f0; padding: 2px 0; }
+        .btn-check { cursor: pointer; font-size: 1.1rem; color: #ccc; user-select: none; font-weight: bold; }
+        .item-completado { color: #aaa !important; text-decoration: line-through; }
+        .check-completado { color: var(--success) !important; }
+
+        .cliente-card .monto { 
+            font-size: 1rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            display: block;
+            text-align: right;
+            margin-bottom: 8px;
+        }
+
+        .btn-confirmar-v {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            width: 100%;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-confirmar-v.is-pagado {
+            background: var(--success);
+            cursor: default;
+        }
+
         @media (min-width: 1024px) {
             .main-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
         }
@@ -138,11 +215,7 @@
                     <label>Categoría</label>
                     <select id="selCategoria" onchange="actualizarProductos()">
                         <option value="">Seleccione...</option>
-                        <option value="PIZZAS">PIZZAS</option>
-                        <option value="POLLO AL HORNO">POLLO AL HORNO</option>
-                        <option value="ENTRADAS Y OTROS">ENTRADAS Y OTROS</option>
-                        <option value="POSTRES Y BEBIDAS">POSTRES Y BEBIDAS</option>
-                    </select>
+                        </select>
                 </div>
                 <div class="form-group">
                     <label>Producto</label>
@@ -186,40 +259,31 @@
         </div>
 
         <div class="right-col">
+            
             <div class="card">
-                <h2>⚙️ Gestión de Menú y Precios</h2>
-                <div class="form-group">
-                    <label>Categoría para gestionar:</label>
-                    <select id="admCat" onchange="renderizarAdminMenu()">
-                        <option value="PIZZAS">PIZZAS</option>
-                        <option value="POLLO AL HORNO">POLLO AL HORNO</option>
-                        <option value="ENTRADAS Y OTROS">ENTRADAS Y OTROS</option>
-                        <option value="POSTRES Y BEBIDAS">POSTRES Y BEBIDAS</option>
-                    </select>
-                </div>
-                <div class="table-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr><th>Producto</th><th style="width: 80px;">S/</th><th></th></tr>
-                        </thead>
-                        <tbody id="tbodyAdmin"></tbody>
-                    </table>
-                </div>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="nuevoPNombre" placeholder="Nuevo Producto">
-                    <input type="number" id="nuevoPPrecio" placeholder="S/" style="width: 80px;">
-                    <button class="btn-add" style="width: auto;" onclick="agregarProductoAdmin()">+</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>💰 Resumen de Caja</h2>
+                <h2>💰 Resumen de Caja (Solo Pagados)</h2>
                 <div class="resumen-caja">
                     <div class="stat-box total-dia">TOTAL<span id="cajaTotal">S/ 0.00</span></div>
                     <div class="stat-box total-efectivo">EFECTIVO<span id="cajaEfectivo">S/ 0.00</span></div>
                     <div class="stat-box total-yape">YAPE<span id="cajaYape">S/ 0.00</span></div>
                 </div>
-                <button class="btn-pdf" onclick="exportarPDF()">📄 DESCARGAR PDF</button>
+
+                <div class="acciones-caja-single">
+                    <button class="btn-validar" onclick="toggleArqueo()">🔍 VALIDAR EFECTIVO</button>
+                </div>
+
+                <div id="panelArqueo" class="seccion-arqueo">
+                    <h3 style="margin-top:0; font-size:1rem;">Arqueo de Dinero Físico</h3>
+                    <label>¿Cuánto dinero tienes físicamente?</label>
+                    <input type="number" id="inputFisico" step="0.10" placeholder="0.00">
+                    <button class="btn-add" onclick="validarArqueo()" style="margin-top:10px;">CALCULAR DIFERENCIA</button>
+                    <div id="resultadoArqueo" style="margin-top:10px; font-weight:bold; text-align:center; padding:10px; border-radius:5px;"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🔍 Consulta de Cuenta por Cliente</h2>
+                <div id="contenedorCuentasRapidas" class="cuentas-grid"></div>
             </div>
 
             <div class="card">
@@ -243,13 +307,47 @@
                         <tbody></tbody>
                     </table>
                 </div>
-                <button class="btn-close" onclick="cerrarCaja()">🔒 CERRAR DÍA Y LIMPIAR CAJA</button>
+                <button class="btn-close" onclick="cerrarCaja()">🔒 DESCARGAR REPORTE Y CERRAR DÍA</button>
             </div>
+
+            <div class="card">
+                <h2>⚙️ Gestión de Menú y Precios</h2>
+                <div class="form-group">
+                    <label>Categoría para gestionar:</label>
+                    <div style="display: flex; gap: 5px;">
+                        <select id="admCat" onchange="renderizarAdminMenu()">
+                            </select>
+                        <button class="btn-add" style="width: auto; margin-top: 0; padding: 0 15px;" onclick="habilitarEdicionCategoria()" title="Renombrar categoría">✏️</button>
+                        <button class="btn-add" style="width: auto; margin-top: 0; padding: 0 15px; background: var(--primary);" onclick="habilitarNuevaCategoria()" title="Agregar nueva categoría">+</button>
+                        <button class="btn-delete" style="width: auto; margin-top: 0; padding: 0 15px;" onclick="eliminarCategoriaCompleta()" title="Eliminar categoría">🗑️</button>
+                    </div>
+                    
+                    <div id="editCatContainer" style="display: none; margin-top: 10px; gap: 5px;">
+                        <input type="text" id="inputEditCat" placeholder="Nombre categoría">
+                        <button class="btn-add" style="width: auto; margin-top: 0;" id="btnGuardarCat" onclick="guardarNombreCategoria()">OK</button>
+                    </div>
+                </div>
+                <div class="table-container" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Producto</th><th style="width: 80px;">S/</th><th></th></tr>
+                        </thead>
+                        <tbody id="tbodyAdmin"></tbody>
+                    </table>
+                </div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="nuevoPNombre" placeholder="Nuevo Producto">
+                    <input type="number" id="nuevoPPrecio" placeholder="S/" style="width: 80px;">
+                    <button class="btn-add" style="width: auto;" onclick="agregarProductoAdmin()">+</button>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
 <script>
+    // --- DATOS INICIALES ---
     const inicialEstatica = {
         "PIZZAS": [
             { nombre: "AMERICANA PERSONAL", precio: 10.00 },
@@ -317,6 +415,7 @@
     let inicial = JSON.parse(localStorage.getItem('menu_diletto_v1')) || inicialEstatica;
     let ventas = JSON.parse(localStorage.getItem('ventas_diletto_v14')) || [];
 
+    // --- FUNCIONES DE PRODUCTOS ---
     function actualizarProductos() {
         const cat = document.getElementById('selCategoria').value;
         const selProd = document.getElementById('selProducto');
@@ -329,9 +428,7 @@
         mostrarPrecio();
     }
 
-    function mostrarPrecio() {
-        calcularSubtotal();
-    }
+    function mostrarPrecio() { calcularSubtotal(); }
 
     function calcularSubtotal() {
         const cat = document.getElementById('selCategoria').value;
@@ -345,16 +442,45 @@
         }
     }
 
+    // --- LÓGICA DE CAJA Y ARQUEO ---
+    function toggleArqueo() {
+        const panel = document.getElementById('panelArqueo');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        document.getElementById('resultadoArqueo').innerHTML = "";
+        document.getElementById('inputFisico').value = "";
+    }
+
+    function validarArqueo() {
+        const resumen = calcularTotales();
+        const efectivoSistema = resumen.efectivo;
+        const fisicoIngresado = parseFloat(document.getElementById('inputFisico').value) || 0;
+        const divResultado = document.getElementById('resultadoArqueo');
+        
+        const diferencia = fisicoIngresado - efectivoSistema;
+
+        if (Math.abs(diferencia) < 0.01) {
+            divResultado.style.background = "#d4edda";
+            divResultado.style.color = "#155724";
+            divResultado.innerHTML = "✅ ¡CAJA CONFORME! Todo cuadra perfectamente.";
+        } else if (diferencia < 0) {
+            divResultado.style.background = "#f8d7da";
+            divResultado.style.color = "#721c24";
+            divResultado.innerHTML = `❌ FALTANTE: S/ ${Math.abs(diferencia).toFixed(2)}`;
+        } else {
+            divResultado.style.background = "#fff3cd";
+            divResultado.style.color = "#856404";
+            divResultado.innerHTML = `⚠️ SOBRANTE: S/ ${diferencia.toFixed(2)}`;
+        }
+    }
+
+    // --- REGISTRO Y GESTIÓN DE VENTAS ---
     function registrarVenta() {
         const cat = document.getElementById('selCategoria').value;
         const idx = document.getElementById('selProducto').value;
         const cant = parseInt(document.getElementById('ventaCant').value) || 1;
-        
         if (!cat || idx === "") return alert("Selecciona un producto");
-
         const ahora = new Date();
         const subtotal = parseFloat(document.getElementById('ventaPrecio').value);
-
         ventas.push({
             id: Date.now(),
             fecha: ahora.toLocaleDateString(),
@@ -365,14 +491,39 @@
             nota: document.getElementById('ventaNota').value || "-",
             modalidad: document.getElementById('modalidad').value,
             pago: document.getElementById('pago').value,
-            total: subtotal
+            total: subtotal,
+            listo: false,
+            pagado: false
         });
-
         localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
-        
         document.getElementById('ventaNota').value = "";
         document.getElementById('ventaCant').value = "1";
         renderizarVentas();
+    }
+
+    function toggleListo(id) {
+        const index = ventas.findIndex(v => v.id === id);
+        if (index !== -1) {
+            ventas[index].listo = !ventas[index].listo;
+            localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
+            actualizarResumenSolo();
+        }
+    }
+
+    function confirmarPagoCliente(clienteNom) {
+        const nomUpper = clienteNom.toUpperCase();
+        let montoConfirmado = 0;
+        ventas.forEach((v, index) => {
+            if (v.cliente.toUpperCase() === nomUpper && !v.pagado) {
+                ventas[index].pagado = true;
+                montoConfirmado += v.total;
+            }
+        });
+        if (montoConfirmado > 0) {
+            localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
+            renderizarVentas();
+            alert(`Pago de ${clienteNom} por S/ ${montoConfirmado.toFixed(2)} ingresado a caja.`);
+        }
     }
 
     function editarCampo(id, campo, valor) {
@@ -380,7 +531,8 @@
         if (index !== -1) {
             ventas[index][campo] = valor || (campo === 'cliente' ? 'Cliente Varios' : '-');
             localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
-            if(campo === 'pago') actualizarResumenSolo();
+            if(campo === 'pago' || campo === 'cliente' || campo === 'total') renderizarVentas();
+            else actualizarResumenSolo();
         }
     }
 
@@ -395,21 +547,17 @@
     function calcularTotales() {
         let t = 0, e = 0, y = 0;
         let resumenClientes = {};
-        
         ventas.forEach(v => {
-            t += v.total;
-            if(v.pago === 'Efectivo') e += v.total; else y += v.total;
-            
-            if (!resumenClientes[v.cliente]) {
-                resumenClientes[v.cliente] = { total: 0, items: [] };
+            if (v.pagado) {
+                t += v.total;
+                if(v.pago === 'Efectivo') e += v.total; else y += v.total;
             }
-            resumenClientes[v.cliente].total += v.total;
-            resumenClientes[v.cliente].items.push({ 
-                nombre: v.producto, 
-                cant: v.cantidad, 
-                precio: v.total,
-                pago: v.pago 
-            });
+            let nom = v.cliente.trim().toUpperCase();
+            if (!resumenClientes[nom]) resumenClientes[nom] = { total: 0, items: [], todoPagado: true, pagos: new Set() };
+            resumenClientes[nom].total += v.total;
+            resumenClientes[nom].items.push({ id: v.id, nombre: v.producto, cant: v.cantidad, precio: v.total, pago: v.pago, listo: v.listo, pagado: v.pagado });
+            resumenClientes[nom].pagos.add(v.pago);
+            if (!v.pagado) resumenClientes[nom].todoPagado = false;
         });
         return { total: t, efectivo: e, yape: y, porCliente: resumenClientes };
     }
@@ -419,52 +567,52 @@
         document.getElementById('cajaTotal').textContent = `S/ ${resumen.total.toFixed(2)}`;
         document.getElementById('cajaEfectivo').textContent = `S/ ${resumen.efectivo.toFixed(2)}`;
         document.getElementById('cajaYape').textContent = `S/ ${resumen.yape.toFixed(2)}`;
+        
+        const contenedor = document.getElementById('contenedorCuentasRapidas');
+        contenedor.innerHTML = "";
+        const clientes = Object.keys(resumen.porCliente);
+        if(clientes.length === 0) {
+            contenedor.innerHTML = "<p style='color:#999; font-size:0.8rem;'>Sin consumos registrados.</p>";
+        } else {
+            clientes.forEach(c => {
+                const info = resumen.porCliente[c];
+                let htmlItems = "";
+                info.items.forEach(item => {
+                    const claseTachado = item.listo ? 'item-completado' : '';
+                    const claseCheck = item.listo ? 'check-completado' : '';
+                    const iconoCheck = item.listo ? '✔' : '○';
+                    htmlItems += `<div class="item-linea"><span class="btn-check ${claseCheck}" onclick="toggleListo(${item.id})">${iconoCheck}</span><span class="${claseTachado}">${item.cant}x ${item.nombre}</span></div>`;
+                });
+                const claseCardPagado = info.todoPagado ? 'pagado-card' : '';
+                const btnTexto = info.todoPagado ? '✓ PAGADO' : 'CONFIRMAR VENTA';
+                const btnClase = info.todoPagado ? 'is-pagado' : '';
+                const btnOnClick = info.todoPagado ? '' : `onclick="confirmarPagoCliente('${c}')"`;
+                contenedor.innerHTML += `<div class="cliente-card ${claseCardPagado}"><span class="nom">${c}</span><div class="detalle-items">${htmlItems}</div><span class="monto">Total: S/ ${info.total.toFixed(2)}</span><button class="btn-confirmar-v ${btnClase}" ${btnOnClick}>${btnTexto}</button></div>`;
+            });
+        }
     }
 
     function renderizarVentas() {
         const tbody = document.querySelector('#tablaVentas tbody');
         tbody.innerHTML = "";
         actualizarResumenSolo();
-
         ventas.slice().reverse().forEach(v => {
-            tbody.innerHTML += `<tr>
-                <td>${v.fecha}</td>
-                <td><strong>${v.hora}</strong></td>
-                <td>
-                    <input type="text" class="edit-input" value="${v.cliente}" onchange="editarCampo(${v.id}, 'cliente', this.value)">
-                </td>
-                <td>${v.producto}</td>
-                <td>${v.cantidad}</td>
-                <td>
-                    <input type="text" class="edit-input" value="${v.nota}" onchange="editarCampo(${v.id}, 'nota', this.value)">
-                </td>
-                <td>${v.modalidad}</td>
-                <td>
-                    <select class="edit-input" onchange="editarCampo(${v.id}, 'pago', this.value)">
-                        <option value="Efectivo" ${v.pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option>
-                        <option value="Yape" ${v.pago === 'Yape' ? 'selected' : ''}>Yape</option>
-                    </select>
-                </td>
-                <td>S/ ${v.total.toFixed(2)}</td>
-                <td><button class="btn-delete" onclick="borrarVenta(${v.id})">❌</button></td>
-            </tr>`;
+            const estiloPagado = v.pagado ? 'style="background-color: #f0fff4;"' : '';
+            tbody.innerHTML += `<tr ${estiloPagado}><td>${v.fecha}</td><td><strong>${v.hora}</strong></td><td><input type="text" class="edit-input" value="${v.cliente}" onchange="editarCampo(${v.id}, 'cliente', this.value)"></td><td>${v.producto}</td><td>${v.cantidad}</td><td><input type="text" class="edit-input" value="${v.nota}" onchange="editarCampo(${v.id}, 'nota', this.value)"></td><td>${v.modalidad}</td><td><select class="edit-input" onchange="editarCampo(${v.id}, 'pago', this.value)"><option value="Efectivo" ${v.pago === 'Efectivo' ? 'selected' : ''}>Efectivo</option><option value="Yape" ${v.pago === 'Yape' ? 'selected' : ''}>Yape</option></select></td><td>S/ ${v.total.toFixed(2)}</td><td><button class="btn-delete" onclick="borrarVenta(${v.id})">❌</button></td></tr>`;
         });
     }
 
+    // --- ADMINISTRACIÓN DE MENÚ ---
     function renderizarAdminMenu() {
         const cat = document.getElementById('admCat').value;
         const tbody = document.getElementById('tbodyAdmin');
         tbody.innerHTML = "";
-        
-        inicial[cat].forEach((p, i) => {
-            tbody.innerHTML += `
-                <tr>
-                    <td><input type="text" class="edit-input" value="${p.nombre}" onchange="editarMenuAdmin('${cat}', ${i}, 'nombre', this.value)"></td>
-                    <td><input type="number" class="edit-input" value="${p.precio}" onchange="editarMenuAdmin('${cat}', ${i}, 'precio', this.value)"></td>
-                    <td><button onclick="borrarProductoAdmin('${cat}', ${i})">❌</button></td>
-                </tr>
-            `;
-        });
+        if (cat && inicial[cat]) {
+            inicial[cat].forEach((p, i) => {
+                tbody.innerHTML += `<tr><td><input type="text" class="edit-input" value="${p.nombre}" onchange="editarMenuAdmin('${cat}', ${i}, 'nombre', this.value)"></td><td><input type="number" class="edit-input" value="${p.precio}" onchange="editarMenuAdmin('${cat}', ${i}, 'precio', this.value)"></td><td><button onclick="borrarProductoAdmin('${cat}', ${i})">❌</button></td></tr>`;
+            });
+        }
+        actualizarSelectoresCategorias();
     }
 
     function editarMenuAdmin(cat, i, campo, valor) {
@@ -478,6 +626,7 @@
         const nom = document.getElementById('nuevoPNombre').value;
         const pre = parseFloat(document.getElementById('nuevoPPrecio').value);
         if(!nom || isNaN(pre)) return alert("Completa nombre y precio");
+        if(!cat) return alert("Selecciona o crea una categoría primero.");
         inicial[cat].push({ nombre: nom.toUpperCase(), precio: pre });
         guardarMenuAdmin();
         document.getElementById('nuevoPNombre').value = "";
@@ -495,46 +644,130 @@
         }
     }
 
-    function guardarMenuAdmin() {
-        localStorage.setItem('menu_diletto_v1', JSON.stringify(inicial));
+    // --- GESTIÓN DE CATEGORÍAS ---
+    function habilitarEdicionCategoria() {
+        const catActual = document.getElementById('admCat').value;
+        if(!catActual) return;
+        const container = document.getElementById('editCatContainer');
+        const input = document.getElementById('inputEditCat');
+        const btn = document.getElementById('btnGuardarCat');
+        container.style.display = 'flex';
+        input.value = catActual;
+        btn.onclick = guardarNombreCategoria;
+        input.focus();
     }
 
+    function habilitarNuevaCategoria() {
+        const container = document.getElementById('editCatContainer');
+        const input = document.getElementById('inputEditCat');
+        const btn = document.getElementById('btnGuardarCat');
+        container.style.display = 'flex';
+        input.value = "";
+        btn.onclick = crearNuevaCategoria;
+        input.focus();
+    }
+
+    function guardarNombreCategoria() {
+        const catAntigua = document.getElementById('admCat').value;
+        const catNueva = document.getElementById('inputEditCat').value.trim().toUpperCase();
+        
+        if (!catNueva || catAntigua === catNueva) {
+            document.getElementById('editCatContainer').style.display = 'none';
+            return;
+        }
+        if (inicial[catNueva]) return alert("Esta categoría ya existe.");
+
+        inicial[catNueva] = inicial[catAntigua];
+        delete inicial[catAntigua];
+
+        guardarMenuAdmin();
+        document.getElementById('editCatContainer').style.display = 'none';
+        actualizarSelectoresCategorias(catNueva);
+        renderizarAdminMenu();
+        actualizarProductos();
+    }
+
+    function crearNuevaCategoria() {
+        const catNueva = document.getElementById('inputEditCat').value.trim().toUpperCase();
+        if (!catNueva) return alert("Ingresa un nombre.");
+        if (inicial[catNueva]) return alert("Esta categoría ya existe.");
+
+        inicial[catNueva] = []; // Inicia vacía
+        guardarMenuAdmin();
+        document.getElementById('editCatContainer').style.display = 'none';
+        actualizarSelectoresCategorias(catNueva);
+        renderizarAdminMenu();
+        actualizarProductos();
+    }
+
+    function eliminarCategoriaCompleta() {
+        const cat = document.getElementById('admCat').value;
+        if(!cat) return;
+        if(confirm(`¿Estás seguro de eliminar la categoría "${cat}" y TODOS sus productos?`)) {
+            delete inicial[cat];
+            guardarMenuAdmin();
+            const keys = Object.keys(inicial);
+            actualizarSelectoresCategorias(keys[0] || "");
+            renderizarAdminMenu();
+            actualizarProductos();
+        }
+    }
+
+    function actualizarSelectoresCategorias(seleccionada) {
+        const selAdm = document.getElementById('admCat');
+        const selVenta = document.getElementById('selCategoria');
+        const valorAdm = seleccionada || selAdm.value;
+        const valorVenta = selVenta.value;
+
+        const categorias = Object.keys(inicial);
+        let htmlOptions = "";
+        categorias.forEach(cat => {
+            htmlOptions += `<option value="${cat}">${cat}</option>`;
+        });
+
+        selAdm.innerHTML = htmlOptions;
+        selVenta.innerHTML = `<option value="">Seleccione...</option>` + htmlOptions;
+
+        if (categorias.includes(valorAdm)) selAdm.value = valorAdm;
+        if (categorias.includes(valorVenta)) selVenta.value = valorVenta;
+    }
+
+    function guardarMenuAdmin() { localStorage.setItem('menu_diletto_v1', JSON.stringify(inicial)); }
+
+    // --- EXPORTACIÓN Y CIERRE ---
     function exportarPDF() {
-        if (ventas.length === 0) return alert("No hay ventas.");
+        if (ventas.length === 0) return false;
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
         const resumen = calcularTotales();
-        
-        doc.setFontSize(16);
-        doc.setFont(undefined, 'bold');
+
+        doc.setFontSize(16); doc.setFont(undefined, 'bold');
         doc.text("REPORTE DE VENTAS - DILETTO ARTESANAL", 14, 15);
-        
+
         doc.autoTable({
             startY: 25,
-            head: [['Fecha', 'Hora', 'Cliente', 'Producto', 'Cant', 'Nota', 'Mod', 'Pago', 'Total']],
-            body: ventas.map(v => [v.fecha, v.hora, v.cliente, v.producto, v.cantidad, v.nota, v.modalidad, v.pago, `S/ ${v.total.toFixed(2)}`]),
-            theme: 'striped',
-            headStyles: { fillColor: [44, 62, 80] },
-            styles: { fontSize: 8 },
-            columnStyles: { 2: { cellWidth: 30 }, 3: { cellWidth: 40 }, 5: { cellWidth: 35 } }
+            head: [['Fecha', 'Hora', 'Cliente', 'Producto', 'Cant', 'Nota', 'Mod', 'Pago', 'Total', 'Estado']],
+            body: ventas.map(v => [v.fecha, v.hora, v.cliente, v.producto, v.cantidad, v.nota, v.modalidad, v.pago, `S/ ${v.total.toFixed(2)}`, v.pagado ? 'PAGADO' : 'PENDIENTE']),
+            theme: 'striped', headStyles: { fillColor: [44, 62, 80] }, styles: { fontSize: 8 }
         });
 
-        let currentY = doc.lastAutoTable.finalY + 15;
+        let yResumen = doc.lastAutoTable.finalY + 15;
+        doc.setFontSize(12); doc.text("DETALLE Y RESUMEN POR CLIENTE", 14, yResumen);
 
-        doc.setFontSize(12);
-        doc.text("DETALLE Y RESUMEN POR CLIENTE", 14, currentY - 5);
+        let filasAgrupadas = [];
+        const clientes = Object.keys(resumen.porCliente);
         
-        const dataDesglose = [];
-        Object.keys(resumen.porCliente).forEach(nombre => {
-            dataDesglose.push([
-                { content: nombre, styles: { fontStyle: 'bold', fillColor: [230, 240, 255] } }, 
-                { content: "", styles: { fillColor: [230, 240, 255] } }, 
-                { content: `Total: S/ ${resumen.porCliente[nombre].total.toFixed(2)}`, styles: { fontStyle: 'bold', halign: 'right', fillColor: [230, 240, 255] } }
+        clientes.forEach(cli => {
+            const info = resumen.porCliente[cli];
+            filasAgrupadas.push([
+                { content: cli, styles: { fontStyle: 'bold', fillColor: [214, 234, 248] } }, 
+                { content: "", styles: { fillColor: [214, 234, 248] } }, 
+                { content: `Total: S/ ${info.total.toFixed(2)}`, styles: { halign: 'right', fontStyle: 'bold', fillColor: [214, 234, 248] } }
             ]);
             
-            resumen.porCliente[nombre].items.forEach(item => {
-                dataDesglose.push([
-                    `  (${item.cant}) ${item.nombre}`, 
+            info.items.forEach(item => {
+                filasAgrupadas.push([
+                    `   (${item.cant}) ${item.nombre}`,
                     { content: item.pago, styles: { halign: 'center' } }, 
                     `S/ ${item.precio.toFixed(2)}`
                 ]);
@@ -542,46 +775,52 @@
         });
 
         doc.autoTable({
-            startY: currentY,
+            startY: yResumen + 5,
             head: [['Cliente / Productos', 'Pago', 'Costo']],
-            body: dataDesglose,
+            body: filasAgrupadas,
             theme: 'grid',
-            headStyles: { fillColor: [39, 174, 96] },
+            headStyles: { fillColor: [46, 204, 113] }, 
             styles: { fontSize: 9 },
-            margin: { left: 14 },
-            tableWidth: 125 
+            columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' } },
+            tableWidth: 120 
         });
 
-        doc.autoTable({
-            startY: currentY,
-            head: [[{ content: 'CIERRE DE CAJA GENERAL', colSpan: 2, styles: { halign: 'center', fillColor: [52, 152, 219] } }]],
+        doc.autoTable({ 
+            startY: yResumen + 5, 
+            head: [[{ content: 'CIERRE DE CAJA GENERAL (PAGADOS)', colSpan: 2, styles: { halign: 'center', fillColor: [52, 152, 219] } }]], 
             body: [
-                ['Total Efectivo', `S/ ${resumen.efectivo.toFixed(2)}`],
-                ['Total Yape', `S/ ${resumen.yape.toFixed(2)}`],
+                ['Total Efectivo', `S/ ${resumen.efectivo.toFixed(2)}`], 
+                ['Total Yape', `S/ ${resumen.yape.toFixed(2)}`], 
                 [{ content: 'TOTAL DEL DÍA', styles: { fontStyle: 'bold' } }, { content: `S/ ${resumen.total.toFixed(2)}`, styles: { fontStyle: 'bold' } }]
-            ],
-            theme: 'grid',
-            styles: { fontSize: 10 },
+            ], 
+            theme: 'grid', 
+            styles: { fontSize: 10 }, 
             margin: { left: 150 }, 
-            tableWidth: 80
+            tableWidth: 80 
         });
 
         doc.save(`Cierre_Caja_${new Date().toLocaleDateString()}.pdf`);
+        return true;
     }
 
     function cerrarCaja() {
         if (ventas.length === 0) return alert("Caja vacía.");
-        if (confirm("¿Cerrar caja hoy? Se descargará el reporte y se borrarán los datos.")) {
-            exportarPDF();
-            ventas = [];
-            localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
-            renderizarVentas();
-        }
+        exportarPDF();
+        setTimeout(() => {
+            if (confirm("✅ Reporte generado. ¿Deseas LIMPIAR LA CAJA ahora? Se borrarán todos los registros del historial.")) {
+                ventas = [];
+                localStorage.setItem('ventas_diletto_v14', JSON.stringify(ventas));
+                renderizarVentas();
+                if(document.getElementById('panelArqueo').style.display === 'block') toggleArqueo();
+                alert("Caja reiniciada para el nuevo día.");
+            }
+        }, 800);
     }
 
-    window.onload = () => {
-        renderizarVentas();
-        renderizarAdminMenu();
+    window.onload = () => { 
+        actualizarSelectoresCategorias();
+        renderizarVentas(); 
+        renderizarAdminMenu(); 
     };
 </script>
 </body>
